@@ -72,5 +72,64 @@ function withdraw(){alert("Withdrawal अभी Demo में है। Real pa
 function logout(){localStorage.removeItem(CURRENT);showApp()}
 showApp();
 </script>
-</body>
+</body><!doctype html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TaskEarn</title>
+<style>
+body{margin:0;font-family:Arial;background:#f1f5f9;color:#172033}.wrap{max-width:760px;margin:auto;padding:18px}
+.card{background:#fff;border-radius:24px;padding:24px;margin-bottom:18px;box-shadow:0 5px 20px #0001}.hero{background:#2563eb;color:#fff}
+input{width:100%;padding:14px;margin:7px 0;border:1px solid #ddd;border-radius:12px;font-size:16px;box-sizing:border-box}
+button{border:0;border-radius:12px;padding:13px 18px;background:#2563eb;color:#fff;font-size:16px;font-weight:bold}button.secondary{background:#e5e7eb;color:#172033}button:disabled{opacity:.5}
+.task{display:flex;justify-content:space-between;align-items:center;padding:15px 0;border-bottom:1px solid #e5e7eb}.task:last-child{border:0}
+.muted{color:#6b7280}.row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}.balance{font-size:44px;font-weight:bold}
+#app{display:none}#loading{display:none;text-align:center}.error{color:#b91c1c}.success{color:#15803d}
+</style></head>
+<body>
+<div id="loading" class="wrap"><div class="card">Loading...</div></div>
+<div id="login" class="wrap"><div class="card">
+<h1>TaskEarn</h1><p class="muted">Online account में Login करें या नया account बनाएं।</p>
+<input id="name" placeholder="आपका नाम"><input id="email" type="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password (कम से कम 6 characters)">
+<div class="row"><button onclick="signUp()">नया Account</button><button class="secondary" onclick="signIn()">Login</button></div>
+<p id="authMessage"></p>
+</div></div>
+<div id="app" class="wrap">
+<div class="card hero"><div class="row"><div><h1>TaskEarn</h1>नमस्ते, <b id="userName"></b> 👋</div><button class="secondary" onclick="logout()">Logout</button></div>
+<div class="balance" id="coins">0</div><div>आपके Coins</div></div>
+<div class="card"><h2>आज के Tasks</h2>
+<div class="task"><div><b>Daily Check-in</b><br><span class="muted">App खोलकर check-in करें</span></div><button id="dailyBtn" onclick="completeTask('daily',10)">+10</button></div>
+<div class="task"><div><b>Profile Complete</b><br><span class="muted">अपनी profile पूरी करें</span></div><button id="profileBtn" onclick="completeTask('profile',25)">+25</button></div>
+<div class="task"><div><b>Share Task</b><br><span class="muted">दोस्तों के साथ share करें</span></div><button id="shareBtn" onclick="completeTask('share',15)">+15</button></div>
+</div>
+<div class="card"><h2>Wallet</h2><p><b id="walletCoins">0</b> Coins</p><p class="muted">Withdrawal system अभी connect नहीं हुआ है।</p><button onclick="withdraw()">Withdrawal Request</button></div>
+<div class="card"><h2>Account</h2><p><b id="accountName"></b></p><p class="muted" id="accountEmail"></p></div>
+</div>
+
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,updateProfile}from"https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import{getFirestore,doc,getDoc,setDoc,runTransaction}from"https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+
+const firebaseConfig={apiKey:"AIzaSyCpGQCgNVUbE-BZl4fUTa5CRH9Z-YLzWys",authDomain:"taskearn-fc601.firebaseapp.com",projectId:"taskearn-fc601",storageBucket:"taskearn-fc601.firebasestorage.app",messagingSenderId:"945576005383",appId:"1:945576005383:web:231c4f141c0ff48432bfa2",measurementId:"G-BQLLGET3GQ"};
+const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
+const $=id=>document.getElementById(id);
+function message(t,c="error"){$("authMessage").textContent=t;$("authMessage").className=c}
+function form(){return{name:$("name").value.trim(),email:$("email").value.trim().toLowerCase(),password:$("password").value}}
+function err(e){let c=e.code||"";if(c.includes("invalid-credential"))return"Email या Password गलत है।";if(c.includes("email-already-in-use"))return"यह Email पहले से registered है। Login करें।";if(c.includes("invalid-email"))return"Email सही नहीं है।";if(c.includes("weak-password"))return"Password कम से कम 6 characters का रखें।";return"कुछ समस्या हुई। Internet check करें।"}
+
+window.signUp=async()=>{let{x}=({x:form()});let{name,email,password}=x;if(!name||!email||!password)return message("नाम, Email और Password भरें।");if(password.length<6)return message("Password कम से कम 6 characters का रखें।");try{let c=await createUserWithEmailAndPassword(auth,email,password);await updateProfile(c.user,{displayName:name});await setDoc(doc(db,"users",c.user.uid),{name,email,coins:0,tasks:{},createdAt:Date.now()});message("Account बन गया।","success")}catch(e){message(err(e))}};
+window.signIn=async()=>{let{email,password}=form();if(!email||!password)return message("Email और Password भरें।");try{await signInWithEmailAndPassword(auth,email,password)}catch(e){message(err(e))}};
+window.logout=()=>signOut(auth);
+const today=()=>new Date().toISOString().slice(0,10);
+
+async function load(u){let r=doc(db,"users",u.uid),s=await getDoc(r);if(!s.exists()){await setDoc(r,{name:u.displayName||"User",email:u.email||"",coins:0,tasks:{}});return{name:u.displayName||"User",email:u.email||"",coins:0,tasks:{}}}return s.data()}
+async function refresh(u){let d=await load(u);$("userName").textContent=d.name||"User";$("accountName").textContent=d.name||"User";$("accountEmail").textContent=d.email||u.email||"";$("coins").textContent=d.coins||0;$("walletCoins").textContent=d.coins||0;let t=d.tasks||{},k=today();$("dailyBtn").disabled=!!t["daily_"+k];$("profileBtn").disabled=!!t["profile_"+k];$("shareBtn").disabled=!!t["share_"+k]}
+
+window.completeTask=async(task,amount)=>{let u=auth.currentUser;if(!u)return;let key=task+"_"+today(),r=doc(db,"users",u.uid);try{await runTransaction(db,async(tx)=>{let s=await tx.get(r),d=s.exists()?s.data():{coins:0,tasks:{}};let t=d.tasks||{};if(t[key])throw Error("done");t[key]=true;tx.set(r,{coins:(d.coins||0)+amount,tasks:t,name:d.name||u.displayName||"User",email:d.email||u.email||""},{merge:true})});await refresh(u);alert("Task पूरा! +"+amount+" Coins मिले।")}catch(e){if(e.message==="done")alert("यह task आज पहले ही पूरा हो चुका है।");else alert("Task save नहीं हुआ। Internet check करें।");await refresh(u)}};
+window.withdraw=()=>alert("Withdrawal अभी connect नहीं हुआ है। पहले real payment system जोड़ेंगे।");
+
+onAuthStateChanged(auth,async u=>{if(u){$("login").style.display="none";$("app").style.display="block";try{await refresh(u)}catch(e){alert("Account data load नहीं हुआ। Firestore Rules check करें।")}}else{$("login").style.display="block";$("app").style.display="none"}});
+</script></body></html>
 </html>
