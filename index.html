@@ -1,78 +1,4 @@
-<!DOCTYPE html>
-<html lang="hi">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#2563eb">
-<title>TaskEarn</title>
-<style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f1f5f9;color:#172033}
-.wrap{max-width:760px;margin:auto;padding:18px}.card{background:#fff;border-radius:24px;padding:24px;margin-bottom:18px;box-shadow:0 5px 20px #0001}
-.hero{background:#2563eb;color:#fff}h1,h2{margin-top:0}input{width:100%;padding:14px;margin:7px 0;border:1px solid #d1d5db;border-radius:12px;font-size:16px}
-button{border:0;border-radius:12px;padding:13px 18px;background:#2563eb;color:#fff;font-size:16px;font-weight:bold}
-button.secondary{background:#e5e7eb;color:#172033}.task{display:flex;align-items:center;justify-content:space-between;padding:15px 0;border-bottom:1px solid #e5e7eb}
-.task:last-child{border-bottom:0}.muted{color:#6b7280}.small{font-size:13px}.row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-.balance{font-size:44px;font-weight:bold;margin-top:8px}.badge{display:inline-block;background:#dbeafe;color:#1d4ed8;padding:5px 10px;border-radius:999px;font-size:13px}
-#app{display:none}#login{max-width:500px;margin:45px auto}
-</style>
-</head>
-<body>
-<div id="login" class="wrap"><div class="card">
-<h1>TaskEarn</h1><p class="muted">Login करके अपने Tasks और Coins संभालें।</p>
-<input id="name" placeholder="आपका नाम"><input id="email" type="email" placeholder="Email">
-<button onclick="login()">Login / Account बनाएं</button>
-<p class="small muted">Demo version: यह local account है। Secure online login बाद में backend के साथ जोड़ेंगे।</p>
-</div></div>
-
-<div id="app" class="wrap">
-<div class="card hero"><div class="row"><div><h1>TaskEarn</h1>नमस्ते, <b id="userName"></b> 👋</div>
-<button class="secondary" onclick="logout()">Logout</button></div>
-<div class="balance" id="coins">0</div><div>आपके Coins</div></div>
-
-<div class="card"><h2>आज के Tasks</h2>
-<div class="task"><div><b>Daily Check-in</b><br><span class="muted">App खोलकर check-in करें</span></div><button onclick="completeTask('daily',10)">+10</button></div>
-<div class="task"><div><b>Profile Complete</b><br><span class="muted">अपनी profile पूरी करें</span></div><button onclick="completeTask('profile',25)">+25</button></div>
-<div class="task"><div><b>Share Task</b><br><span class="muted">दोस्तों के साथ share करें</span></div><button onclick="completeTask('share',15)">+15</button></div>
-</div>
-
-<div class="card"><h2>Wallet</h2><p><b id="walletCoins">0</b> Coins</p>
-<p class="muted">Demo version: अभी real withdrawal/payment connected नहीं है।</p>
-<button onclick="withdraw()">Withdrawal Request</button></div>
-
-<div class="card"><h2>Account</h2><p><b id="accountName"></b></p><p class="muted" id="accountEmail"></p><span class="badge">User Account</span></div>
-</div>
-
-<script>
-const KEY="taskearn_users_v1", CURRENT="taskearn_current_user";
-function getUsers(){return JSON.parse(localStorage.getItem(KEY)||"{}")}
-function saveUsers(u){localStorage.setItem(KEY,JSON.stringify(u))}
-function login(){
- const name=document.getElementById("name").value.trim(), email=document.getElementById("email").value.trim().toLowerCase();
- if(!name||!email){alert("नाम और Email दोनों भरें।");return}
- const users=getUsers(); if(!users[email]) users[email]={name,email,coins:0,tasks:{}}; else users[email].name=name;
- saveUsers(users);localStorage.setItem(CURRENT,email);showApp();
-}
-function currentUser(){const e=localStorage.getItem(CURRENT);return e?(getUsers()[e]||null):null}
-function showApp(){
- const u=currentUser();
- document.getElementById("login").style.display=u?"none":"block";
- document.getElementById("app").style.display=u?"block":"none";
- if(!u)return;
- document.getElementById("userName").textContent=u.name;document.getElementById("accountName").textContent=u.name;
- document.getElementById("accountEmail").textContent=u.email;document.getElementById("coins").textContent=u.coins;
- document.getElementById("walletCoins").textContent=u.coins;
-}
-function completeTask(task,amount){
- const e=localStorage.getItem(CURRENT),users=getUsers(),u=users[e];if(!u)return;
- const key=task+"_"+new Date().toISOString().slice(0,10);
- if(u.tasks[key]){alert("यह task आज पहले ही पूरा हो चुका है।");return}
- u.tasks[key]=true;u.coins+=amount;users[e]=u;saveUsers(users);showApp();alert("Task पूरा! +"+amount+" Coins मिले।");
-}
-function withdraw(){alert("Withdrawal अभी Demo में है। Real payment system अभी connect नहीं है।")}
-function logout(){localStorage.removeItem(CURRENT);showApp()}
-showApp();
-</script>
-</body><!doctype html>
+<!doctype html>
 <html lang="hi">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -132,4 +58,3 @@ window.withdraw=()=>alert("Withdrawal अभी connect नहीं हुआ �
 
 onAuthStateChanged(auth,async u=>{if(u){$("login").style.display="none";$("app").style.display="block";try{await refresh(u)}catch(e){alert("Account data load नहीं हुआ। Firestore Rules check करें।")}}else{$("login").style.display="block";$("app").style.display="none"}});
 </script></body></html>
-</html>
